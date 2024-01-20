@@ -2,18 +2,44 @@ const router = require("express").Router();
 const authMiddleware = require("../middlewares/authMiddleware");
 const { Comment } = require("../models");
 
-// GET all comments
-router.get("/", authMiddleware, (req, res) => {
-  if(req.session) {
+// GET all comments of users
+router.get("/", authMiddleware, async (req, res) => {
+  if(!req.session) {
+  res.status(401).json({message:"Log in to view comments"});
+  return;
+  }
   try {
-    let comment = Comment.findAll({});
+    let comment = await Comment.findAll({
+      where: {
+        user_id: req.session.user_id,
+      }
+    });
     res.json(comment);
+    return;
   } catch (error) {
     res.status(500).json(error);
   }
-}
-res.status(401).json({message:"Log in to view comments"});
 });
+
+// Get comment by post id
+router.get("/:id", authMiddleware, async (req, res) => {
+  if(!req.session) {
+    res.status(401).json({message:"Log in to view comments"});
+    return;
+  }
+  try {
+    let comment = await Comment.findAll({
+      where: {
+        post_id: req.params.id,
+      }
+    })
+    res.json(comment);
+    return;
+  } catch (error) {
+    res.status(500).json(error);
+    return;
+  }
+})
 
 // CREATE new comments
 router.post("/new", authMiddleware, async (req, res) => {
