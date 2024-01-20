@@ -51,7 +51,8 @@ Step 4: run the project using the following commands
 npm run server
 ```
 Project will run at port 3001
-    ## Environment Variables
+
+## Environment Variables
 
 To run this project, you will need to add the following environment variables to your .env file
 
