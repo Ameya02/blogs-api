@@ -56,8 +56,11 @@ Project will run at port 3001
 To run this project, you will need to add the following environment variables to your .env file
 
 `DB_USER`: name of the user of the mysql database eg: root
+
 `DB_NAME`: name of the database eg: blogsDB
+
 `DB_PW`: password of the user: eg root
+
 `JWT_SECRET`: secret key of json web token eg json_secret
 
 
