@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { Post, User, Comment } = require("../models");
+const { callStoredProcedure } = require("../config/connection");
 const authMiddleware = require("../middlewares/authMiddleware");
 
 // GET all posts
@@ -9,28 +9,7 @@ router.get("/", async (req, res) => {
     return;
   }
   try{
-  const post = await Post.findAll({
-    // Query configuration
-    attributes: ["id", "post_text", "title", "created_at"],
-    // show latest news first
-    order: [["created_at", "DESC"]],
-    // JOIN to the User table
-    include: [
-      // comment model -- attaches username to comment
-      {
-        model: Comment,
-        attributes: ["id", "comment_text", "post_id", "user_id", "created_at"],
-        include: {
-          model: User,
-          attributes: ["username"],
-        },
-      },
-      {
-        model: User,
-        attributes: ["username"],
-      },
-    ],
-  })
+  const post = await callStoredProcedure("get_posts");
   res.json(post);
   }
 
@@ -47,7 +26,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
     return;
   }
   try {
-    const post = await Post.findByPk(req.params.id);
+    const post = await callStoredProcedure("get_post_by_id", [req.params.id]);
     if (!post) {
       res.status(404).json({ message: "No post found with this id" });
       return;
@@ -64,15 +43,16 @@ router.post("/new", authMiddleware, async (req, res) => {
     res.status(401).json({ message: "Log in to create posts" });
     return;
   }
+
   try {
-    const post = await Post.create({
-      title: req.body.title,
-      post_text: req.body.post_text,
-      user_id: req.session.user_id,
-    });
+    const post = await callStoredProcedure("create_post", [
+      req.body.title,
+      req.body.post_text,
+      req.session.user_id,
+    ]);
     res.json(post);
   } catch (error) {
-    res.status(400).json(err);
+    res.status(400).json(error);
   }
 });
 
@@ -83,29 +63,22 @@ router.put("/:id", authMiddleware, async (req, res) => {
     return;
   }
   try {
-    console.log(req.params.id);
-    const post = await Post.findByPk(req.params.id);
+    const post = await callStoredProcedure("get_post_by_id", [req.params.id]);
     if (!post) {
       res.status(404).json({ message: "No post found with this id" });
       return;
     }
-    if (req.session.user_id != post.user_id) {
+    if (req.session.user_id != post[0].user_id) {
       res
         .status(401)
         .json({ message: "You are not authorized to update this post" });
       return;
     }
-    await Post.update(
-      {
-        title: req.body.title,
-        post_text: req.body.post_text,
-      },
-      {
-        where: {
-          id: req.params.id,
-        },
-      }
-    );
+    await callStoredProcedure("update_post", [
+      req.params.id,
+      req.body.title,
+      req.body.post_text,
+    ]);
     res.json({ msg: "Post updated successfully" });
   } catch (error) {
     console.log(err);
@@ -120,22 +93,19 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     return;
   }
   try {
-    const post = await Post.findByPk(req.params.id);
+    const post = await callStoredProcedure("get_post_by_id", [req.params.id]);
     if (!post) {
       res.status(404).json({ message: "No post found with this id" });
       return;
     }
-    if (req.session.user_id != post.user_id) {
+    if (req.session.user_id != post[0].user_id) {
       res
         .status(401)
         .json({ message: "You are not authorized to delete this post" });
       return;
     }
-    await Post.destroy({
-      where: {
-        id: req.params.id,
-      },
-    });
+    await callStoredProcedure("delete_post", [req.params.id]);
+    
     res.json({ msg: "Post deleted" });
   } catch (error) {
     console.log(err);

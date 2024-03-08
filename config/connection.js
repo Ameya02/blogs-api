@@ -1,17 +1,17 @@
-// import the Sequelize constructor from the library
-const Sequelize = require("sequelize");
+const pgp = require('pg-promise')();
+    const dbConfig = {
+      user: 'postgres',
+      password: 'root',
+      database: 'blogsDB',
+      host: '127.0.0.1',
+      port: 5432
+    };
+    const db = pgp(dbConfig);
+const callStoredProcedure = async (procedureName, ...args) => {
+  const result = await db.func(procedureName, ...args);
+  return result;
+}
 
-require("dotenv").config();
-
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PW,
-  {
-    host: "localhost",
-    dialect: "mysql",
-    port: 3306,
-  }
-);
-
-module.exports = sequelize;
+module.exports = {
+  callStoredProcedure
+};

@@ -1,14 +1,13 @@
 const express = require("express");
 const routes = require("./controllers");
-const sequelize = require("./config/connection");
 const morgan = require("morgan");
-
+const dotenv = require("dotenv");
+dotenv.config();
 const session = require("express-session");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const SequelizeStore = require("connect-session-sequelize")(session.Store);
 
 // create session
 const sess = {
@@ -16,9 +15,6 @@ const sess = {
   cookie: { originalMaxAge: 600000 },
   resave: false,
   saveUninitialized: true,
-  store: new SequelizeStore({
-    db: sequelize,
-  }),
 };
 // use modules in the app
 app.use(morgan("dev"));
@@ -30,6 +26,4 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api", routes);
 
 // turn on connection to db and server
-sequelize.sync().then(() => {
   app.listen(PORT, () => console.log("Now listening"));
-});
